@@ -192,10 +192,17 @@ def mainWork():
 
                 #directory = "C:\Prabhu\Relanto\ANAPLAN_EVENT_DEMO - Allocation"
                 #filename = os.path.join(directory, 'output.csv')
-                filename = "output.csv"
-                with open(filename, "a", newline="") as file:
-                  writer = csv.writer(file)
-                  writer.writerow(['Plant_SKU','Time','Country','Demand','Result'])
+                #filename = "output.csv"
+                #with open(filename, "a", newline="") as file:
+                #  writer = csv.writer(file)
+                #  writer.writerow(['Plant_SKU','Time','Country','Demand','Result'])
+                
+                output=pandas.DataFrame(columns=['Plant_SKU','Time','Country','Demand','Result'])
+                output_Plant_SKU=[]
+                output_Time=[]
+                output_Country=[]
+                output_Demand=[]
+                output_Result=[]
                 balance={}
                 for mon in time:
 
@@ -233,11 +240,20 @@ def mainWork():
                         if ("{} Demand is {} for {} and country {} Result is".format(prod,demand_for_mon['Demand'].values[0], mon,country)) not in results:
                           results["{} Demand is {} for {} and country {} Result is".format(prod,demand_for_mon['Demand'].values[0], mon,country)]=minf
                           #here add all 5 columns to the csv
-                          with open(filename, "a", newline="") as file:
-                                writer = csv.writer(file)
-                                writer.writerow([prod+"_"+country,mon, country, demand_for_mon['Demand'].values[0], minf])
+                          output_Plant_SKU.append(prod+"_"+country)
+                          output_Time.append(mon)
+                          output_Country.append(country)
+                          output_Demand.append(demand_for_mon['Demand'].values[0])
+                          output_Result.append(minf)
+                          #with open(filename, "a", newline="") as file:
+                          #      writer = csv.writer(file)
+                          #      writer.writerow([prod+"_"+country,mon, country, demand_for_mon['Demand'].values[0], minf])
                         balance=prod_inv.copy() 
-                
+                output['Plant_SKU']=output_Plant_SKU
+                output['Time']=output_Time
+                output['Country']=output_Country
+                output['Result']=output_Result
+                output['Demand']=output_Demand
                                 
                               
                 for file in file_info:
@@ -259,22 +275,22 @@ def mainWork():
                         if getFileData1['status']['message'] == 'Success':
                             print(f"Setting chunk count to -1 for {file['name']} COMPLETED")
                         
-                        #csv = data_Frame.to_csv()
+                        uploadfile = output.to_csv()
                         #print(csv)
                         #test.to_csv("C:\Prabhu\Relanto\ANAPLAN_EVENT_DEMO\CAL01 Sales Forecast (4).csv")
                         tempFileName = file['name']
                         fileID = file['id']
-                        with open('output.csv', 'rb') as uploadFile:
-                            f = uploadFile.read()
-                            url = f'https://api.anaplan.com/2/0/workspaces/8a868cdc7bd6c9ae017be5b938c83112/models/94E1B92C9FD34262BE156ED588F89FDF/files/{fileID}/chunks/0'
-                            requests.put(
-                                url,
-                                headers = {
-                                    'Authorization': authToken,
-                                    'Content-Type': 'application/octet-stream'
-                                },
-                                data = f
-                            )
+                        #with open('output.csv', 'rb') as uploadFile:
+                        #    f = uploadFile.read()
+                        url = f'https://api.anaplan.com/2/0/workspaces/8a868cdc7bd6c9ae017be5b938c83112/models/94E1B92C9FD34262BE156ED588F89FDF/files/{fileID}/chunks/0'
+                        requests.put(
+                            url,
+                            headers = {
+                                'Authorization': authToken,
+                                'Content-Type': 'application/octet-stream'
+                            },
+                            data = uploadfile
+                        )
                         print("Allocated Data Uploaded to Anaplan")
                         
                         url = f'https://api.anaplan.com/2/0/workspaces/8a868cdc7bd6c9ae017be5b938c83112/models/94E1B92C9FD34262BE156ED588F89FDF/files/{fileID}/complete'
